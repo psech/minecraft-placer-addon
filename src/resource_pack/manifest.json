@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Placer Resource Pack",
+    "description": "Resources for the Placer block.",
+    "uuid": "9665233c-8081-4f63-836c-4fcd8342553e",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 26, 0]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "efd535bc-a6a1-46ff-89be-e1ab3ee77b9a",
+      "version": [1, 0, 0]
+    }
+  ]
+}
