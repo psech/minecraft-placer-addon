@@ -1,0 +1,18 @@
+{
+  "resource_pack_name": "Placer",
+  "texture_name": "atlas.terrain",
+  "texture_data": {
+    "placer_front": {
+      "textures": "textures/blocks/placer_front"
+    },
+    "placer_back": {
+      "textures": "textures/blocks/placer_back"
+    },
+    "placer_side": {
+      "textures": "textures/blocks/placer_side"
+    },
+    "placer_top": {
+      "textures": "textures/blocks/placer_top"
+    }
+  }
+}

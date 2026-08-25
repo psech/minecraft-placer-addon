@@ -16,8 +16,23 @@
     "components": {
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
-        "*": {
-          "texture": "placer"
+        "north": {
+          "texture": "placer_front"
+        },
+        "south": {
+          "texture": "placer_back"
+        },
+        "east": {
+          "texture": "placer_side"
+        },
+        "west": {
+          "texture": "placer_side"
+        },
+        "up": {
+          "texture": "placer_top"
+        },
+        "down": {
+          "texture": "placer_bottom"
         }
       },
 
