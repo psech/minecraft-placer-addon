@@ -33,7 +33,7 @@
           "texture": "placer_top"
         },
         "down": {
-          "texture": "placer_top"
+          "texture": "placer_down"
         }
       },
 

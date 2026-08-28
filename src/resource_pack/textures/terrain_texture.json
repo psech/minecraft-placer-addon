@@ -13,6 +13,9 @@
     },
     "placer_top": {
       "textures": "textures/blocks/placer_top"
+    },
+    "placer_down": {
+      "textures": "textures/blocks/placer_down"
     }
   }
 }
