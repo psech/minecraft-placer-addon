@@ -1,5 +1,5 @@
 {
-  "format_version": "1.26.0",
+  "format_version": "1.26.40",
   "minecraft:block": {
     "description": {
       "identifier": "placer:placer",
@@ -40,6 +40,10 @@
       "minecraft:redstone_consumer": {
         "min_power": 1,
         "propagates_power": false
+      },
+
+      "minecraft:block_entity": {
+        "dynamic_properties": true
       },
 
       "placer:placer": {}

@@ -3,9 +3,7 @@ import { ItemStack, system, world } from "@minecraft/server";
 import { CustomForm } from "@minecraft/server-ui";
 
 const INVENTORY_SIZE = 9;
-const INVENTORY_PROPERTY = "placer:inventories";
-
-console.warn("Placer add-on loaded");
+const INVENTORY_PROPERTY = "inventory";
 
 /*
  * --------------------------------------------------------------------------
@@ -13,50 +11,50 @@ console.warn("Placer add-on loaded");
  * --------------------------------------------------------------------------
  */
 
-function loadInventories() {
-  const value = world.getDynamicProperty(INVENTORY_PROPERTY);
-
-  if (typeof value !== "string") {
-    return {};
-  }
-
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    console.warn(`Failed to parse Placer inventories: ${error}`);
-    return {};
-  }
-}
-
-function saveInventories(inventories) {
-  world.setDynamicProperty(INVENTORY_PROPERTY, JSON.stringify(inventories));
-}
-
-function blockKey(block) {
-  return [
-    block.dimension.id,
-    block.location.x,
-    block.location.y,
-    block.location.z,
-  ].join(":");
+function emptyInventory() {
+  return Array(INVENTORY_SIZE).fill(null);
 }
 
 function getInventory(block) {
-  const inventories = loadInventories();
-  const key = blockKey(block);
+  const properties = block.getComponent("minecraft:dynamic_properties");
 
-  if (!inventories[key]) {
-    inventories[key] = Array(INVENTORY_SIZE).fill(null);
-    saveInventories(inventories);
+  if (!properties) {
+    throw new Error("Placer does not have minecraft:dynamic_properties");
   }
 
-  return inventories[key];
+  const value = properties.get(INVENTORY_PROPERTY);
+
+  if (typeof value !== "string") {
+    const inventory = emptyInventory();
+
+    properties.set(INVENTORY_PROPERTY, JSON.stringify(inventory));
+
+    return inventory;
+  }
+
+  try {
+    const inventory = JSON.parse(value);
+
+    if (!Array.isArray(inventory) || inventory.length !== INVENTORY_SIZE) {
+      throw new Error("Invalid inventory structure");
+    }
+
+    return inventory;
+  } catch (error) {
+    console.warn(`Invalid Placer inventory: ${error}`);
+
+    return emptyInventory();
+  }
 }
 
-function setInventory(block, inventory) {
-  const inventories = loadInventories();
-  inventories[blockKey(block)] = inventory;
-  saveInventories(inventories);
+function saveInventory(block, inventory) {
+  const properties = block.getComponent("minecraft:dynamic_properties");
+
+  if (!properties) {
+    throw new Error("Placer does not have minecraft:dynamic_properties");
+  }
+
+  properties.set(INVENTORY_PROPERTY, JSON.stringify(inventory));
 }
 
 /*
@@ -65,41 +63,56 @@ function setInventory(block, inventory) {
  * --------------------------------------------------------------------------
  */
 
-function addItem(block, item) {
+function getMaxStackSize(typeId) {
+  return getItemMaxStackSize(typeId);
+}
+
+function getItemMaxStackSize(typeId) {
+  try {
+    const item = new ItemStack(typeId, 1);
+    return item.maxAmount;
+  } catch {
+    return 64;
+  }
+}
+
+function addItemToSlot(block, slotIndex, item) {
   const inventory = getInventory(block);
+  const slot = inventory[slotIndex];
 
-  // First try to stack with an existing stack.
-  for (let i = 0; i < inventory.length; i++) {
-    const slot = inventory[i];
+  if (!slot) {
+    const amount = Math.min(item.amount, getMaxStackSize(item.typeId));
 
-    if (slot && slot.typeId === item.typeId && slot.amount < 64) {
-      const space = 64 - slot.amount;
-      const amount = Math.min(space, item.amount);
+    inventory[slotIndex] = {
+      typeId: item.typeId,
+      amount,
+    };
 
-      slot.amount += amount;
-      item.amount -= amount;
+    saveInventory(block, inventory);
 
-      if (item.amount === 0) {
-        setInventory(block, inventory);
-        return true;
-      }
-    }
+    return item.amount - amount;
   }
 
-  // Then find an empty slot.
-  for (let i = 0; i < inventory.length; i++) {
-    if (!inventory[i]) {
-      inventory[i] = {
-        typeId: item.typeId,
-        amount: item.amount,
-      };
-
-      setInventory(block, inventory);
-      return true;
-    }
+  if (slot.typeId !== item.typeId) {
+    return item.amount;
   }
 
-  return false;
+  const maxStackSize = getMaxStackSize(slot.typeId);
+
+  const space = maxStackSize - slot.amount;
+
+  if (space <= 0) {
+    return item.amount;
+  }
+
+  const amount = Math.min(space, item.amount);
+
+  slot.amount += amount;
+  item.amount -= amount;
+
+  saveInventory(block, inventory);
+
+  return item.amount;
 }
 
 function removeOne(block, slotIndex) {
@@ -110,7 +123,7 @@ function removeOne(block, slotIndex) {
     return null;
   }
 
-  const result = {
+  const removed = {
     typeId: slot.typeId,
     amount: 1,
   };
@@ -121,9 +134,29 @@ function removeOne(block, slotIndex) {
     inventory[slotIndex] = null;
   }
 
-  setInventory(block, inventory);
+  saveInventory(block, inventory);
 
-  return result;
+  return removed;
+}
+
+function removeStack(block, slotIndex) {
+  const inventory = getInventory(block);
+  const slot = inventory[slotIndex];
+
+  if (!slot) {
+    return null;
+  }
+
+  const removed = {
+    typeId: slot.typeId,
+    amount: slot.amount,
+  };
+
+  inventory[slotIndex] = null;
+
+  saveInventory(block, inventory);
+
+  return removed;
 }
 
 /*
