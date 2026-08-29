@@ -18,7 +18,7 @@
 
       "minecraft:material_instances": {
         "north": {
-          "texture": "placer_back"
+          "texture": "placer_side"
         },
         "south": {
           "texture": "placer_front"
@@ -33,7 +33,7 @@
           "texture": "placer_top"
         },
         "down": {
-          "texture": "placer_down"
+          "texture": "placer_top"
         }
       },
 
