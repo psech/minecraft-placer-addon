@@ -235,6 +235,37 @@ export function insertIntoInventory(block, item) {
 }
 
 /**
+ * Removes exactly one item from a Placer slot, clearing the slot when its
+ * stack reaches zero.
+ *
+ * Returns the removed item's typeId, or null when the slot is empty.
+ */
+export function takeOneItem(block, slotIndex) {
+  if (slotIndex < 0 || slotIndex >= INVENTORY_SIZE) {
+    throw new Error(`Invalid Placer slot: ${slotIndex}`);
+  }
+
+  const inventory = getInventory(block);
+  const slot = inventory[slotIndex];
+
+  if (!slot) {
+    return null;
+  }
+
+  const { typeId } = slot;
+
+  slot.amount -= 1;
+
+  if (slot.amount <= 0) {
+    inventory[slotIndex] = null;
+  }
+
+  saveInventory(block, inventory);
+
+  return typeId;
+}
+
+/**
  * Removes an entire stack from a Placer slot.
  *
  * Returns null when the slot is empty.

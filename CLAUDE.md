@@ -52,3 +52,11 @@ Record confirmed runtime behaviour here so it isn't re-litigated:
 - Click-to-transfer works end to end (verified 2026-08-30): explicit standard button mappings (`button.menu_select → $pressed_button_name` pressed, `button.menu_ok → …` focused) make slot buttons fire, `selection` maps correctly across hidden empty-slot buttons and manual `collection_index` slots, and deposits (full + partial stacks) and withdrawals both work.
 - The grid-row wrapper centers the 3×3 grid (verified 2026-08-30).
 - Zero-motion screen animations (override of `third_party_server_screen` `$screen_animations`/`$background_animations` with no-op anims firing `screen.exit_end`) suppress the swipe on the close/reopen cycle (verified 2026-08-30). Side effect: all server forms lose slide transitions while the pack is active.
+- `onRedstoneUpdate` events carry `powerLevel` and `previousPowerLevel` (stable, v26.40 docs), so rising-edge detection is stateless.
+
+Pending runtime verification (Phase 5 placement — move up once confirmed):
+
+- **Front-direction mapping**: `FRONT_OFFSETS` in `main.js` assumes `minecraft:cardinal_direction` = the direction the player faced at placement, so the front points opposite to the state. The official docs' example is internally ambiguous on this. If in-game blocks appear on the BACK side of the Placer, negate all four offsets (the map's comment says so too).
+- One rising edge places exactly one block; level fluctuations while powered don't retrigger.
+- `dispenser.dispense` / `dispenser.fail` sound ids play on this runtime.
+- Placement into liquid replaces the liquid block.

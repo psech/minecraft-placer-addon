@@ -93,7 +93,7 @@ Then iterate by editing the source and running `/reload all` in-game.
 | 2 | Inventory backend — 9 slots on world dynamic properties | ✅ Done |
 | 3 | UI — 3×3 container-style interface via JSON UI (real item icons, stack counts, player inventory below; click-to-transfer) | ✅ Done |
 | 4 | Hopper interaction — all sides except front | ⬜ Planned |
-| 5 | Block placement on redstone activation | ⬜ Planned |
+| 5 | Block placement on redstone activation (rising edge → place one block in front, random eligible slot, dispenser sounds) | 🔄 Implemented, pending in-game verification |
 | 6 | Edge cases — unloaded chunks, protected areas, non-replaceable targets, rapid pulses, block drops on destruction | ⬜ Planned |
 
 See [docs/Minecraft Bedrock Add-on_ Placer Block.md](docs/Minecraft%20Bedrock%20Add-on_%20Placer%20Block.md) for the full specification.

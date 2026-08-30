@@ -7,6 +7,7 @@ import {
   removeStack,
   serializeItemStack,
   setSlot,
+  takeOneItem,
 } from "./inventory.js";
 import { buildPlacerScreen, PLAYER_SLOT_OFFSET } from "./ui/placerScreen.js";
 
@@ -223,6 +224,165 @@ function depositPlayerSlot(player, block, playerSlotIndex) {
 
 /*
  * ============================================================================
+ * Block placement (redstone activation)
+ * ============================================================================
+ */
+
+/*
+ * Direction the Placer's front face points, per minecraft:cardinal_direction
+ * state value.
+ *
+ * The state records the direction the player was FACING at placement, and
+ * the block's rotation permutations (blocks/placer.json) put the front
+ * texture — the un-rotated "south" (+Z) material instance — on the side
+ * facing the player, like a Dispenser. The front therefore points OPPOSITE
+ * to the state value.
+ *
+ * Bedrock axes: north = -Z, south = +Z, east = +X, west = -X.
+ *
+ * If in-game testing shows blocks appearing on the BACK side, the trait
+ * semantics are inverted on this runtime: negate all four offsets.
+ */
+const FRONT_OFFSETS = new Map([
+  ["north", { x: 0, y: 0, z: 1 }],
+  ["south", { x: 0, y: 0, z: -1 }],
+  ["east", { x: -1, y: 0, z: 0 }],
+  ["west", { x: 1, y: 0, z: 0 }],
+]);
+
+const SOUND_DISPENSE = "dispenser.dispense";
+const SOUND_FAIL = "dispenser.fail";
+
+/**
+ * Plays a vanilla dispenser sound at a Placer's position.
+ */
+function playPlacerSound(block, soundId) {
+  const { x, y, z } = block.location;
+
+  block.dimension.playSound(soundId, { x: x + 0.5, y: y + 0.5, z: z + 0.5 });
+}
+
+/**
+ * Returns the block directly in front of a Placer, or undefined when the
+ * front direction is unknown or the target position is not loaded.
+ */
+function getFrontBlock(block) {
+  let state;
+
+  try {
+    state = block.permutation.getState("minecraft:cardinal_direction");
+  } catch {
+    state = undefined;
+  }
+
+  const offset = FRONT_OFFSETS.get(state);
+
+  if (!offset) {
+    console.warn(`[Placer] Unknown cardinal_direction state: ${state}`);
+
+    return undefined;
+  }
+
+  try {
+    /*
+     * Block.offset returns undefined (or throws at world bounds) when the
+     * target chunk is not loaded.
+     */
+    return block.offset(offset);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Picks the Placer slot to place from: a random occupied slot holding a
+ * placeable block, matching the vanilla Dispenser's random slot selection.
+ *
+ * Returns a slot index, or -1 when no eligible slot exists. Non-placeable
+ * types cannot normally get in (deposits are filtered), but stale data is
+ * skipped defensively rather than trusted.
+ */
+function pickPlacementSlot(inventory) {
+  const eligibleSlots = [];
+
+  for (let slotIndex = 0; slotIndex < inventory.length; slotIndex++) {
+    const slot = inventory[slotIndex];
+
+    if (slot && isPlaceableBlock(slot.typeId)) {
+      eligibleSlots.push(slotIndex);
+    }
+  }
+
+  if (eligibleSlots.length === 0) {
+    return -1;
+  }
+
+  return eligibleSlots[Math.floor(Math.random() * eligibleSlots.length)];
+}
+
+/**
+ * Places one block from the Placer's inventory into the block directly in
+ * front of it. Runs deferred (via system.run) from the redstone handler.
+ */
+function activatePlacer(dimension, location) {
+  const block = resolvePlacerBlock(dimension, location);
+
+  if (!block) {
+    return;
+  }
+
+  const target = getFrontBlock(block);
+
+  if (!target) {
+    debugLog("activation skipped: front target unavailable");
+
+    return;
+  }
+
+  /*
+   * Only replace air or liquid, like placing a block by hand. Everything
+   * else (including protected areas and special placement rules) is
+   * Phase 6 territory.
+   */
+  if (!target.isAir && !target.isLiquid) {
+    debugLog(`activation blocked by ${target.typeId}`);
+    playPlacerSound(block, SOUND_FAIL);
+
+    return;
+  }
+
+  const slotIndex = pickPlacementSlot(getInventory(block));
+
+  if (slotIndex === -1) {
+    debugLog("activation with no placeable blocks in inventory");
+    playPlacerSound(block, SOUND_FAIL);
+
+    return;
+  }
+
+  const typeId = takeOneItem(block, slotIndex);
+
+  try {
+    target.setType(typeId);
+  } catch (error) {
+    /*
+     * Placement failed after the item was already removed: put it back so
+     * activation failures never destroy items.
+     */
+    insertIntoInventory(block, { typeId, amount: 1 });
+
+    console.warn(`[Placer] Failed to place ${typeId}: ${error}`);
+    playPlacerSound(block, SOUND_FAIL);
+
+    return;
+  }
+
+  debugLog(`placed ${typeId} from slot ${slotIndex}`);
+  playPlacerSound(block, SOUND_DISPENSE);
+}
+
+/*
+ * ============================================================================
  * Block registration
  * ============================================================================
  */
@@ -240,12 +400,30 @@ system.beforeEvents.startup.subscribe(({ blockComponentRegistry }) => {
     },
 
     onRedstoneUpdate(event) {
-      console.warn(
-        `Placer activated at ` +
-          `${event.block.location.x}, ` +
-          `${event.block.location.y}, ` +
-          `${event.block.location.z}`,
+      const { block, powerLevel, previousPowerLevel } = event;
+
+      /*
+       * Activate on the rising edge only (unpowered -> powered), so one
+       * redstone pulse places exactly one block. Level changes while
+       * already powered, and power-off updates, are ignored.
+       */
+      if (powerLevel <= 0 || previousPowerLevel > 0) {
+        return;
+      }
+
+      debugLog(
+        `redstone rising edge (${previousPowerLevel} -> ${powerLevel}) at ` +
+          `${block.location.x}, ${block.location.y}, ${block.location.z}`,
       );
+
+      /*
+       * Defer the world mutation by one tick: the event fires during
+       * redstone evaluation, and deferring both avoids read-only-mode
+       * surprises and mimics the vanilla Dispenser's activation delay.
+       */
+      const { dimension, location } = block;
+
+      system.run(() => activatePlacer(dimension, location));
     },
 
     onPlayerBreak(event) {
