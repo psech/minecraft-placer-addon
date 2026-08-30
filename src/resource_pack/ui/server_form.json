@@ -10,6 +10,58 @@
 	// by LeGend077 & Herobrine64, licensed CC BY 4.0. Modified: single Placer
 	// layout, furnace/chest variants removed.
 	"namespace": "server_form",
+
+	// Replaces the screen's default slide/fade transitions with zero-motion
+	// animations, so the Placer screen appears to stay in place when the
+	// script closes and reopens it after each click-to-transfer.
+	//
+	// The screen manager will not remove a screen until an exit animation
+	// fires "screen.exit_end", so the exit animations must exist — they just
+	// move nothing. Entrance animations are omitted entirely (the screen
+	// appears instantly). Side effect: ALL server forms (including other
+	// add-ons') lose the slide-in/out transition while this pack is active.
+	//
+	// $screen_content and button_mappings restate the vanilla values, because
+	// redefining the control replaces it wholesale.
+	"third_party_server_screen@common.base_screen": {
+		"$screen_content": "server_form.main_screen_content",
+		"$screen_animations": [
+			"@server_form.placer_instant_exit_pop",
+			"@server_form.placer_instant_exit_push"
+		],
+		"$background_animations": [
+			"@server_form.placer_instant_exit_pop",
+			"@server_form.placer_instant_exit_push"
+		],
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_cancel",
+				"to_button_id": "button.menu_exit",
+				"mapping_type": "global"
+			}
+		]
+	},
+
+	"placer_instant_exit_pop": {
+		"anim_type": "offset",
+		"easing": "linear",
+		"duration": 0.05,
+		"from": [0, 0],
+		"to": [0, 0],
+		"play_event": "screen.exit_pop",
+		"end_event": "screen.exit_end"
+	},
+
+	"placer_instant_exit_push": {
+		"anim_type": "offset",
+		"easing": "linear",
+		"duration": 0.05,
+		"from": [0, 0],
+		"to": [0, 0],
+		"play_event": "screen.exit_push",
+		"end_event": "screen.exit_end"
+	},
+
 	"long_form": {
 		"type": "panel",
 		"controls": [

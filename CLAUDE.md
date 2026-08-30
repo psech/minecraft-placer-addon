@@ -49,9 +49,9 @@ Record confirmed runtime behaviour here so it isn't re-litigated:
 - A bare fixed-width control inside the UI's vertical stack panel renders **left-aligned**, not centered — centering requires a full-width wrapper panel with explicit center anchors.
 - Chest-UI's inventory-section buttons are **display-only by design**: their `button_mappings` override replaces `common.button`'s standard mappings with inert ones, so clicks are swallowed. Clickable slots need the standard mappings (`button.menu_select → $pressed_button_name` pressed, `button.menu_ok → …` focused) — declared explicitly in `placer_ui.indexed_slot_button`.
 
+- Click-to-transfer works end to end (verified 2026-08-30): explicit standard button mappings (`button.menu_select → $pressed_button_name` pressed, `button.menu_ok → …` focused) make slot buttons fire, `selection` maps correctly across hidden empty-slot buttons and manual `collection_index` slots, and deposits (full + partial stacks) and withdrawals both work.
+
 Pending runtime verification (Phase 3 UI — move up once confirmed):
 
-- Clicks on inventory/hotbar slot buttons fire `button.form_button_click` with the explicit standard mappings.
-- Form `selection` maps correctly with hidden empty-slot buttons in between (manual `collection_index` slots included).
-- Clicks on occupied 3×3 grid slots (untested so far — grid was empty).
 - The grid-row wrapper centers the 3×3 grid.
+- Zero-motion screen animations (override of `third_party_server_screen` `$screen_animations`/`$background_animations` with no-op anims firing `screen.exit_end`) suppress the swipe on the close/reopen cycle. Side effect: all server forms lose slide transitions while the pack is active.
