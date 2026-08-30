@@ -13,11 +13,11 @@ import { buildPlacerScreen, PLAYER_SLOT_OFFSET } from "./ui/placerScreen.js";
 const PLACER_BLOCK_ID = "placer:placer";
 
 /*
- * Logs every UI interaction to the content log while Phase 3 is being
- * verified in-game. Uses console.warn because lower levels are filtered
- * out of the content log by default. Set to false once the UI is stable.
+ * Logs every UI interaction to the content log. Uses console.warn because
+ * lower levels are filtered out of the content log by default. Enable when
+ * debugging the container screen.
  */
-const DEBUG_UI = true;
+const DEBUG_UI = false;
 
 function debugLog(message) {
   if (DEBUG_UI) {

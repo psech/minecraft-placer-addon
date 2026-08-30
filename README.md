@@ -91,7 +91,7 @@ Then iterate by editing the source and running `/reload all` in-game.
 |-------|-------------|--------|
 | 1 | Orientation — front face tracks player placement direction | ✅ Done |
 | 2 | Inventory backend — 9 slots on world dynamic properties | ✅ Done |
-| 3 | UI — 3×3 container-style interface via JSON UI (real item icons, stack counts, player inventory below; click-to-transfer) | 🔄 Implemented, pending in-game verification |
+| 3 | UI — 3×3 container-style interface via JSON UI (real item icons, stack counts, player inventory below; click-to-transfer) | ✅ Done |
 | 4 | Hopper interaction — all sides except front | ⬜ Planned |
 | 5 | Block placement on redstone activation | ⬜ Planned |
 | 6 | Edge cases — unloaded chunks, protected areas, non-replaceable targets, rapid pulses, block drops on destruction | ⬜ Planned |

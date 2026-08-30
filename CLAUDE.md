@@ -50,8 +50,5 @@ Record confirmed runtime behaviour here so it isn't re-litigated:
 - Chest-UI's inventory-section buttons are **display-only by design**: their `button_mappings` override replaces `common.button`'s standard mappings with inert ones, so clicks are swallowed. Clickable slots need the standard mappings (`button.menu_select → $pressed_button_name` pressed, `button.menu_ok → …` focused) — declared explicitly in `placer_ui.indexed_slot_button`.
 
 - Click-to-transfer works end to end (verified 2026-08-30): explicit standard button mappings (`button.menu_select → $pressed_button_name` pressed, `button.menu_ok → …` focused) make slot buttons fire, `selection` maps correctly across hidden empty-slot buttons and manual `collection_index` slots, and deposits (full + partial stacks) and withdrawals both work.
-
-Pending runtime verification (Phase 3 UI — move up once confirmed):
-
-- The grid-row wrapper centers the 3×3 grid.
-- Zero-motion screen animations (override of `third_party_server_screen` `$screen_animations`/`$background_animations` with no-op anims firing `screen.exit_end`) suppress the swipe on the close/reopen cycle. Side effect: all server forms lose slide transitions while the pack is active.
+- The grid-row wrapper centers the 3×3 grid (verified 2026-08-30).
+- Zero-motion screen animations (override of `third_party_server_screen` `$screen_animations`/`$background_animations` with no-op anims firing `screen.exit_end`) suppress the swipe on the close/reopen cycle (verified 2026-08-30). Side effect: all server forms lose slide transitions while the pack is active.
