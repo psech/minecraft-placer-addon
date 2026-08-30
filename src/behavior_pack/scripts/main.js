@@ -13,6 +13,19 @@ import { buildPlacerScreen, PLAYER_SLOT_OFFSET } from "./ui/placerScreen.js";
 const PLACER_BLOCK_ID = "placer:placer";
 
 /*
+ * Logs every UI interaction to the content log while Phase 3 is being
+ * verified in-game. Uses console.warn because lower levels are filtered
+ * out of the content log by default. Set to false once the UI is stable.
+ */
+const DEBUG_UI = true;
+
+function debugLog(message) {
+  if (DEBUG_UI) {
+    console.warn(`[Placer] ${message}`);
+  }
+}
+
+/*
  * ============================================================================
  * Block resolution
  * ============================================================================
@@ -88,6 +101,12 @@ function openPlacerScreen(player, dimension, location) {
   buildPlacerScreen(getInventory(block), container)
     .show(player)
     .then((response) => {
+      debugLog(
+        `form response: canceled=${response.canceled} ` +
+          `reason=${response.cancelationReason ?? "none"} ` +
+          `selection=${response.selection ?? "none"}`,
+      );
+
       if (response.canceled || response.selection === undefined) {
         return;
       }
@@ -113,8 +132,10 @@ function handleSlotSelection(player, dimension, location, selection) {
   }
 
   if (selection < PLAYER_SLOT_OFFSET) {
+    debugLog(`withdraw from Placer slot ${selection}`);
     withdrawPlacerSlot(player, block, selection);
   } else {
+    debugLog(`deposit from player slot ${selection - PLAYER_SLOT_OFFSET}`);
     depositPlayerSlot(player, block, selection - PLAYER_SLOT_OFFSET);
   }
 

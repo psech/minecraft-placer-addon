@@ -45,11 +45,13 @@ Record confirmed runtime behaviour here so it isn't re-litigated:
 - `minecraft:cardinal_direction` via the `minecraft:placement_direction` trait works in 1.26.45.
 - The `placer:placer` custom component and `onRedstoneUpdate` fire correctly (verified via `[Scripting][warning]` log output).
 - World dynamic properties persist inventories across `/reload all`.
+- The `§p§l§a§c§e§r` marker switches `server_form` to the Placer layout, and aux-value item icons + stack counts render correctly on 1.26.45 (verified in-game 2026-08-30).
+- A bare fixed-width control inside the UI's vertical stack panel renders **left-aligned**, not centered — centering requires a full-width wrapper panel with explicit center anchors.
+- Chest-UI's inventory-section buttons are **display-only by design**: their `button_mappings` override replaces `common.button`'s standard mappings with inert ones, so clicks are swallowed. Clickable slots need the standard mappings (`button.menu_select → $pressed_button_name` pressed, `button.menu_ok → …` focused) — declared explicitly in `placer_ui.indexed_slot_button`.
 
-Pending runtime verification (Phase 3 UI, implemented 2026-08-30 — move up once confirmed):
+Pending runtime verification (Phase 3 UI — move up once confirmed):
 
-- The `§p§l§a§c§e§r` marker switches `server_form` to the Placer layout.
-- The 3×3 grid renders centered (grid size `[54, 54]`, `grid_dimensions [3, 3]`).
-- Item icons render from aux values on 1.26.45 (typeIds map is from Chest-UI's 26.40 update).
-- Form `selection` maps correctly with hidden empty-slot buttons in between.
-- JSON UI changes require rejoining the world (possibly a full client restart) — `/reload all` only reloads scripts.
+- Clicks on inventory/hotbar slot buttons fire `button.form_button_click` with the explicit standard mappings.
+- Form `selection` maps correctly with hidden empty-slot buttons in between (manual `collection_index` slots included).
+- Clicks on occupied 3×3 grid slots (untested so far — grid was empty).
+- The grid-row wrapper centers the 3×3 grid.

@@ -85,7 +85,7 @@
 													"title@placer_ui.title_label": {}
 												},
 												{
-													"grid@placer_ui.placer_grid": {}
+													"grid_row@placer_ui.grid_row": {}
 												},
 												{
 													"gap2@common.empty_panel": {
@@ -141,6 +141,23 @@
 	// ------------------------------------------------------------------
 	// The 3x3 Placer grid (form buttons 0-8), centered like a Dispenser.
 	// ------------------------------------------------------------------
+
+	// Full-width wrapper that centers the 3x3 grid horizontally: stack-panel
+	// children align to the cross-axis start (verified in-game: a bare 54px
+	// grid renders left-aligned), so the centering must happen inside a
+	// full-width panel.
+	"grid_row": {
+		"type": "panel",
+		"size": ["100%", 54],
+		"controls": [
+			{
+				"grid@placer_ui.placer_grid": {
+					"anchor_from": "center",
+					"anchor_to": "center"
+				}
+			}
+		]
+	},
 
 	"placer_grid": {
 		"type": "grid",
@@ -408,20 +425,25 @@
 		]
 	},
 
-	// Button used in the explicitly indexed hotbar/inventory slots. Identical
-	// to grid_slot_button plus button mappings that indexed collection items
-	// need for controller/keyboard focus to register presses.
+	// Button used in the explicitly indexed hotbar/inventory slots.
+	//
+	// Identical to grid_slot_button, but with the standard button mappings
+	// declared EXPLICITLY. Chest-UI's inventory-section buttons override
+	// button_mappings with inert ones (making that section display-only,
+	// which is why clicks were dead in the first in-game test); declaring
+	// the standard pointer/focus mappings here restores clicking regardless
+	// of whether JSON UI merges or replaces inherited mappings.
 	"indexed_slot_button@common.button": {
 		"$pressed_button_name": "button.form_button_click",
 		"button_mappings": [
 			{
-				"from_button_id": "$pressed_button_name",
-				"to_button_id": "any",
+				"from_button_id": "button.menu_select",
+				"to_button_id": "$pressed_button_name",
 				"mapping_type": "pressed"
 			},
 			{
-				"from_button_id": "$pressed_button_name",
-				"to_button_id": "any",
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "$pressed_button_name",
 				"mapping_type": "focused"
 			}
 		],
