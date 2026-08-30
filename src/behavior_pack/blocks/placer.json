@@ -16,6 +16,16 @@
     "components": {
       "minecraft:geometry": "minecraft:geometry.full_block",
 
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 5.25
+      },
+
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 3.5
+      },
+
+      "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
+
       "minecraft:material_instances": {
         "north": {
           "texture": "placer_side"
