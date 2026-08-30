@@ -47,10 +47,15 @@ const TITLE_MARKER = "§p§l§a§c§e§r";
 
 /*
  * Icons for item types that have no vanilla numeric ID (custom content).
- * "textures/..." paths render as flat images in the JSON UI.
+ * "textures/..." paths render as flat images in the JSON UI, so custom
+ * blocks use pre-rendered isometric icons that mimic the vanilla item
+ * renderer's 3D look (custom blocks get their numeric IDs at runtime and
+ * those can shift with pack changes, so the aux-value route is unreliable
+ * for them). placer_icon.png is generated from the block's top/front/side
+ * textures — see the icon recipe in CLAUDE.md.
  */
 const CUSTOM_ICON_TEXTURES = new Map([
-  ["placer:placer", "textures/blocks/placer_front"],
+  ["placer:placer", "textures/ui/placer_icon"],
 ]);
 
 /**

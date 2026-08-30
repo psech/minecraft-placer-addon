@@ -32,6 +32,20 @@ Production-quality code, not proof-of-concept:
 - **Inventory storage:** world dynamic properties, one JSON string per Placer, keyed `placer:<dimensionId>:<x>:<y>:<z>`. Slots are `{ typeId, amount } | null`, 9 entries. This gives per-block persistence that survives `/reload all`.
 - **Manifests:** BP depends on RP by UUID and on `@minecraft/server` 2.9.0 + `@minecraft/server-ui` 2.1.0. Keep BP/RP `header.version` in sync — CI fails if they disagree, and release tags `vX.Y.Z` must match the manifest version.
 
+## Icon recipe
+
+The container UI renders vanilla items in 3D via aux IDs, but custom blocks have no stable numeric ID, so `placer:placer` uses a pre-rendered isometric icon (`resource_pack/textures/ui/placer_icon.png`). Regenerate it with ImageMagick when block textures change (16×16 sources → 64×64 icon; top unshaded, side ×0.80 on the left face, front ×0.60 on the bottom-right face — vanilla item renders face bottom-RIGHT, verified against Dispenser/Dropper 2026-08-30):
+
+```bash
+magick \
+ \( <top>.png -virtual-pixel transparent +distort Perspective '0,0 32,0  16,0 64,16  16,16 32,32  0,16 0,16' \) \
+ \( <side>.png -channel RGB -evaluate Multiply 0.80 +channel -virtual-pixel transparent +distort Perspective '0,0 0,16  16,0 32,32  16,16 32,64  0,16 0,48' \) \
+ \( <front>.png -channel RGB -evaluate Multiply 0.60 +channel -virtual-pixel transparent +distort Perspective '0,0 32,32  16,0 64,16  16,16 64,48  0,16 32,64' \) \
+ -background none -layers merge +repage -background none -extent 64x64 PNG32:placer_icon.png
+```
+
+Note: `placer_side`/`placer_top` in terrain_texture.json point at vanilla `furnace_side`/`furnace_top` — fetch those from Mojang/bedrock-samples when regenerating.
+
 ## Development & testing workflow
 
 - The maintainer tests on a **separate Windows 11 machine** where the packs are symlinked as development packs; they pull from GitHub and run `/reload all` in-game. **Do not suggest export/import cycles** for development iteration.
