@@ -1,0 +1,93 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          bp=$(jq -r '.header.version | join(".")' src/behavior_pack/manifest.json)
+          rp=$(jq -r '.header.version | join(".")' src/resource_pack/manifest.json)
+          echo "Behavior pack version: $bp"
+          echo "Resource pack version: $rp"
+
+          if [ "$bp" != "$rp" ]; then
+            echo "::error::Manifest versions disagree: behavior pack is $bp, resource pack is $rp."
+            exit 1
+          fi
+
+          echo "version=$bp" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag matches manifest version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest="${{ steps.version.outputs.version }}"
+
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match manifest version $manifest. Bump the manifests or retag."
+            exit 1
+          fi
+
+          echo "Tag $GITHUB_REF_NAME matches manifest version $manifest."
+
+      - name: Build Behavior Pack
+        run: |
+          mkdir -p dist
+          (cd src/behavior_pack && zip -r -X "$GITHUB_WORKSPACE/dist/Placer_BP.mcpack" .)
+
+      - name: Build Resource Pack
+        run: (cd src/resource_pack && zip -r -X "$GITHUB_WORKSPACE/dist/Placer_RP.mcpack" .)
+
+      - name: Build MCAddon
+        run: (cd dist && zip -X Placer.mcaddon Placer_BP.mcpack Placer_RP.mcpack)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Placer-${{ steps.version.outputs.version }}
+          path: |
+            dist/Placer.mcaddon
+            dist/Placer_BP.mcpack
+            dist/Placer_RP.mcpack
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/Placer.mcaddon
+            dist/Placer_BP.mcpack
+            dist/Placer_RP.mcpack
+          generate_release_notes: true
