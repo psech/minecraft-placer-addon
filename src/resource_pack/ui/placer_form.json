@@ -1,0 +1,615 @@
+{
+	// The Placer container screen: a Dispenser-style 3x3 grid with the player
+	// inventory and hotbar below, rendered on top of a scripted ActionForm.
+	//
+	// How it works:
+	// - The script builds one form button per UI slot, in a fixed order:
+	//   buttons 0-8   = the 9 Placer slots (shown in the 3x3 grid),
+	//   buttons 9-17  = player hotbar (container slots 0-8),
+	//   buttons 18-44 = player main inventory (container slots 9-35).
+	// - Button text is encoded as "stack#NN§r<Item Name>". The first 8
+	//   characters carry the stack count; the remainder is the hover text.
+	// - The button "icon" is not a texture path but a numeric aux value
+	//   (item ID * 65536) which the vanilla item renderer draws as a real
+	//   item icon. Strings starting with "textures/" render as flat images.
+	// - Empty slots are buttons with empty text: the slot background stays
+	//   visible, but the button itself is hidden and cannot be clicked.
+	//
+	// Adapted from Chest-UI (https://github.com/Herobrine643928/Chest-UI)
+	// by LeGend077 & Herobrine64, licensed CC BY 4.0. Modified: 3x3 dispenser
+	// layout, fixed slot indices, durability/enchant support removed.
+	"namespace": "placer_ui",
+
+	// ------------------------------------------------------------------
+	// Screen structure
+	// ------------------------------------------------------------------
+
+	"placer_panel": {
+		"type": "panel",
+		"size": ["100%", "100%"],
+		"controls": [
+			{
+				"placer@placer_ui.placer_template": {}
+			}
+		]
+	},
+
+	"placer_template": {
+		"type": "panel",
+		"size": ["100%c", "100%c"],
+		"bindings": [
+			{
+				"binding_name": "#title_text",
+				"binding_type": "global"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not ((#title_text - '§p§l§a§c§e§r') = #title_text))",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				"background": {
+					"type": "image",
+					"texture": "textures/ui/dialog_background_opaque",
+					"layer": 0,
+					"size": ["100%c + 14px", "100%c + 11px"],
+					"controls": [
+						{
+							"container": {
+								"type": "panel",
+								"size": ["100%c", "100%c"],
+								"controls": [
+									{
+										"stack": {
+											"type": "stack_panel",
+											"orientation": "vertical",
+											// 162px = 9 slots x 18px, the width of the
+											// inventory rows below the 3x3 grid.
+											"size": ["162px", "100%c"],
+											"controls": [
+												{
+													"gap@common.empty_panel": {
+														"size": ["100%", 6],
+														"controls": [
+															{
+																"close_button@common.close_button": {
+																	"$close_button_offset": [5, -3]
+																}
+															}
+														]
+													}
+												},
+												{
+													"title@placer_ui.title_label": {}
+												},
+												{
+													"grid@placer_ui.placer_grid": {}
+												},
+												{
+													"gap2@common.empty_panel": {
+														"size": [0, 4]
+													}
+												},
+												{
+													"inventory_label@placer_ui.inventory_label": {}
+												},
+												{
+													"inventory_items@placer_ui.inventory_items": {}
+												},
+												{
+													"gap3@common.empty_panel": {
+														"size": [0, 3]
+													}
+												},
+												{
+													"hotbar_items@placer_ui.hotbar_items": {}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+
+	"title_label": {
+		"type": "label",
+		// The marker's formatting codes render as nothing, so only the real
+		// title ("Placer") is visible.
+		"text": "#title_text",
+		"color": "$title_text_color",
+		"layer": 2,
+		"anchor_from": "bottom_left",
+		"anchor_to": "bottom_left"
+	},
+
+	"inventory_label": {
+		"type": "label",
+		"text": "container.inventory",
+		"color": "$title_text_color",
+		"layer": 2,
+		"anchor_from": "bottom_left",
+		"anchor_to": "bottom_left"
+	},
+
+	// ------------------------------------------------------------------
+	// The 3x3 Placer grid (form buttons 0-8), centered like a Dispenser.
+	// ------------------------------------------------------------------
+
+	"placer_grid": {
+		"type": "grid",
+		"size": [54, 54],
+		"grid_dimensions": [3, 3],
+		"grid_item_template": "placer_ui.grid_slot_panel",
+		"collection_name": "form_buttons",
+		"layer": 1
+	},
+
+	"grid_slot_panel": {
+		"type": "panel",
+		"size": [18, 18],
+		"layer": 1,
+		"controls": [
+			{
+				"bg@placer_ui.cell": {}
+			},
+			{
+				"amount@placer_ui.slot_amount": {}
+			},
+			{
+				"item@placer_ui.grid_slot_button": {}
+			}
+		]
+	},
+
+	// ------------------------------------------------------------------
+	// Player hotbar row (form buttons 9-17 = container slots 0-8).
+	// ------------------------------------------------------------------
+
+	"hotbar_items": {
+		"type": "stack_panel",
+		"size": ["default", 18],
+		"orientation": "horizontal",
+		"collection_name": "form_buttons",
+		"layer": 1,
+		"controls": [
+			{ "0@placer_ui.indexed_slot_panel": { "collection_index": 9 } },
+			{ "1@placer_ui.indexed_slot_panel": { "collection_index": 10 } },
+			{ "2@placer_ui.indexed_slot_panel": { "collection_index": 11 } },
+			{ "3@placer_ui.indexed_slot_panel": { "collection_index": 12 } },
+			{ "4@placer_ui.indexed_slot_panel": { "collection_index": 13 } },
+			{ "5@placer_ui.indexed_slot_panel": { "collection_index": 14 } },
+			{ "6@placer_ui.indexed_slot_panel": { "collection_index": 15 } },
+			{ "7@placer_ui.indexed_slot_panel": { "collection_index": 16 } },
+			{ "8@placer_ui.indexed_slot_panel": { "collection_index": 17 } }
+		]
+	},
+
+	// ------------------------------------------------------------------
+	// Player main inventory, 3 rows (form buttons 18-44 = slots 9-35).
+	// ------------------------------------------------------------------
+
+	"inventory_items": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": ["100%", "default"],
+		"controls": [
+			{
+				"row_1": {
+					"type": "stack_panel",
+					"size": ["default", 18],
+					"orientation": "horizontal",
+					"collection_name": "form_buttons",
+					"layer": 1,
+					"controls": [
+						{ "0@placer_ui.indexed_slot_panel": { "collection_index": 18 } },
+						{ "1@placer_ui.indexed_slot_panel": { "collection_index": 19 } },
+						{ "2@placer_ui.indexed_slot_panel": { "collection_index": 20 } },
+						{ "3@placer_ui.indexed_slot_panel": { "collection_index": 21 } },
+						{ "4@placer_ui.indexed_slot_panel": { "collection_index": 22 } },
+						{ "5@placer_ui.indexed_slot_panel": { "collection_index": 23 } },
+						{ "6@placer_ui.indexed_slot_panel": { "collection_index": 24 } },
+						{ "7@placer_ui.indexed_slot_panel": { "collection_index": 25 } },
+						{ "8@placer_ui.indexed_slot_panel": { "collection_index": 26 } }
+					]
+				}
+			},
+			{
+				"row_2": {
+					"type": "stack_panel",
+					"size": ["default", 18],
+					"orientation": "horizontal",
+					"collection_name": "form_buttons",
+					"layer": 1,
+					"controls": [
+						{ "0@placer_ui.indexed_slot_panel": { "collection_index": 27 } },
+						{ "1@placer_ui.indexed_slot_panel": { "collection_index": 28 } },
+						{ "2@placer_ui.indexed_slot_panel": { "collection_index": 29 } },
+						{ "3@placer_ui.indexed_slot_panel": { "collection_index": 30 } },
+						{ "4@placer_ui.indexed_slot_panel": { "collection_index": 31 } },
+						{ "5@placer_ui.indexed_slot_panel": { "collection_index": 32 } },
+						{ "6@placer_ui.indexed_slot_panel": { "collection_index": 33 } },
+						{ "7@placer_ui.indexed_slot_panel": { "collection_index": 34 } },
+						{ "8@placer_ui.indexed_slot_panel": { "collection_index": 35 } }
+					]
+				}
+			},
+			{
+				"row_3": {
+					"type": "stack_panel",
+					"size": ["default", 18],
+					"orientation": "horizontal",
+					"collection_name": "form_buttons",
+					"layer": 1,
+					"controls": [
+						{ "0@placer_ui.indexed_slot_panel": { "collection_index": 36 } },
+						{ "1@placer_ui.indexed_slot_panel": { "collection_index": 37 } },
+						{ "2@placer_ui.indexed_slot_panel": { "collection_index": 38 } },
+						{ "3@placer_ui.indexed_slot_panel": { "collection_index": 39 } },
+						{ "4@placer_ui.indexed_slot_panel": { "collection_index": 40 } },
+						{ "5@placer_ui.indexed_slot_panel": { "collection_index": 41 } },
+						{ "6@placer_ui.indexed_slot_panel": { "collection_index": 42 } },
+						{ "7@placer_ui.indexed_slot_panel": { "collection_index": 43 } },
+						{ "8@placer_ui.indexed_slot_panel": { "collection_index": 44 } }
+					]
+				}
+			}
+		]
+	},
+
+	"indexed_slot_panel": {
+		"type": "panel",
+		"size": [18, 18],
+		"layer": 1,
+		"controls": [
+			{
+				"bg@placer_ui.cell": {}
+			},
+			{
+				"amount@placer_ui.slot_amount": {}
+			},
+			{
+				"item@placer_ui.indexed_slot_button": {}
+			}
+		]
+	},
+
+	// ------------------------------------------------------------------
+	// Shared slot pieces
+	// ------------------------------------------------------------------
+
+	"cell": {
+		"type": "image",
+		"texture": "textures/ui/item_background",
+		"size": [18, 18],
+		"layer": 2
+	},
+
+	// Stack count in the lower-right corner. Hidden for empty slots and for
+	// single items ("stack#01"), matching vanilla.
+	"slot_amount": {
+		"type": "panel",
+		"controls": [
+			{
+				"item_amount": {
+					"type": "label",
+					"offset": [0, 1],
+					"shadow": true,
+					"text_alignment": "left",
+					"anchor_from": "bottom_right",
+					"anchor_to": "bottom_right",
+					"color": "$tool_tip_text",
+					"layer": 6,
+					"text": "#stack_size",
+					"bindings": [
+						{
+							"binding_name": "#null",
+							"binding_type": "collection",
+							"binding_condition": "none",
+							"binding_collection_name": "form_buttons"
+						},
+						{
+							"binding_name": "#null",
+							"binding_type": "collection_details",
+							"binding_collection_name": "form_buttons"
+						},
+						{
+							"binding_name": "#form_button_text",
+							"binding_type": "collection",
+							"binding_collection_name": "form_buttons"
+						},
+						{
+							"binding_name": "#null",
+							"binding_type": "view",
+							"source_property_name": "((#form_button_text - 'stack#01') = #form_button_text)",
+							"target_property_name": "#visible"
+						},
+						{
+							// Characters 7-8 of the button text are the count.
+							"binding_name": "#null",
+							"binding_type": "view",
+							"source_property_name": "(('§z') + (('%.8s' * #form_button_text) - ('%.6s' * #form_button_text)))",
+							"target_property_name": "#stack_size"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	// Button used inside the auto-indexed 3x3 grid.
+	"grid_slot_button@common.button": {
+		"$pressed_button_name": "button.form_button_click",
+		"bindings": [
+			{
+				"binding_name": "#null",
+				"binding_type": "collection",
+				"binding_condition": "none",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_name": "#null",
+				"binding_type": "collection_details",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_name": "#form_button_text",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_name": "#null",
+				"binding_type": "view",
+				"source_property_name": "(not (#form_button_text = ''))",
+				"target_property_name": "#visible"
+			}
+		],
+		"$aux_id": [
+			{
+				"binding_name": "#form_button_texture",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (('%.8s' * #form_button_texture) = 'textures'))",
+				"target_property_name": "#visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not ((#texture = '') or (#texture = 'loading')))",
+				"target_property_name": "#visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#form_button_texture - (#form_button_texture % 65536)) / 65536)",
+				"target_property_name": "#item_id_aux"
+			}
+		],
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
+		"controls": [
+			{
+				"default@placer_ui.default_control": {}
+			},
+			{
+				"hover@placer_ui.hover_control": {}
+			},
+			{
+				"pressed@placer_ui.pressed_control": {}
+			}
+		]
+	},
+
+	// Button used in the explicitly indexed hotbar/inventory slots. Identical
+	// to grid_slot_button plus button mappings that indexed collection items
+	// need for controller/keyboard focus to register presses.
+	"indexed_slot_button@common.button": {
+		"$pressed_button_name": "button.form_button_click",
+		"button_mappings": [
+			{
+				"from_button_id": "$pressed_button_name",
+				"to_button_id": "any",
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "$pressed_button_name",
+				"to_button_id": "any",
+				"mapping_type": "focused"
+			}
+		],
+		"bindings": [
+			{
+				"binding_name": "#form_button_text",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_type": "collection_details",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (#form_button_text = ''))",
+				"target_property_name": "#visible"
+			}
+		],
+		"$aux_id": [
+			{
+				"binding_name": "#form_button_texture",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (('%.8s' * #form_button_texture) = 'textures'))",
+				"target_property_name": "#visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not ((#texture = '') or (#texture = 'loading')))",
+				"target_property_name": "#visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#form_button_texture - (#form_button_texture % 65536)) / 65536)",
+				"target_property_name": "#item_id_aux"
+			}
+		],
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
+		"controls": [
+			{
+				"default@placer_ui.default_control": {}
+			},
+			{
+				"hover@placer_ui.hover_control": {}
+			},
+			{
+				"pressed@placer_ui.pressed_control": {}
+			}
+		]
+	},
+
+	// ------------------------------------------------------------------
+	// Button visual states
+	// ------------------------------------------------------------------
+
+	"default_control": {
+		"type": "panel",
+		"size": [16, 16],
+		"controls": [
+			{
+				"item@beacon.item_renderer": {
+					"size": [16, 16],
+					"layer": 4,
+					"bindings": "$aux_id"
+				}
+			},
+			{
+				"flat_texture_item@placer_ui.flat_texture_item": {}
+			}
+		]
+	},
+
+	"hover_control": {
+		"type": "panel",
+		"size": [18, 18],
+		"controls": [
+			{
+				"item@beacon.item_renderer": {
+					"size": [16, 16],
+					"layer": 4,
+					"bindings": "$aux_id",
+					"offset": [1, 1]
+				}
+			},
+			{
+				"flat_texture_item@placer_ui.flat_texture_item": {}
+			},
+			{
+				"item_details@placer_ui.item_details": {}
+			},
+			{
+				"highlight_slot@placer_ui.highlight_slot": {}
+			},
+			{
+				"focus_border@placer_ui.focus_border": {}
+			}
+		]
+	},
+
+	"pressed_control": {
+		"type": "panel",
+		"size": [16, 16],
+		"controls": [
+			{
+				"item@beacon.item_renderer": {
+					"size": [16, 16],
+					"layer": 4,
+					"bindings": "$aux_id"
+				}
+			},
+			{
+				"flat_texture_item@placer_ui.flat_texture_item": {}
+			},
+			{
+				"focus_border@placer_ui.focus_border": {}
+			}
+		]
+	},
+
+	"highlight_slot": {
+		"type": "image",
+		"size": [18, 18],
+		"texture": "textures/ui/highlight_slot",
+		"layer": 3
+	},
+
+	"focus_border": {
+		"type": "image",
+		"size": [18, 18],
+		"texture": "textures/ui/focus_border_white",
+		"layer": 4
+	},
+
+	// Cursor-following hover text: everything after the 8-character
+	// "stack#NN" prefix of the button text.
+	"item_details": {
+		"type": "custom",
+		"renderer": "hover_text_renderer",
+		"allow_clipping": false,
+		"layer": 30,
+		"bindings": [
+			{
+				"binding_name": "#form_button_text",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#form_button_text - ('%.8s' * #form_button_text))",
+				"target_property_name": "#hover_text"
+			},
+			{
+				"binding_type": "collection_details",
+				"binding_collection_name": "form_buttons"
+			}
+		]
+	},
+
+	// Fallback for icons given as a "textures/..." path (used for the Placer
+	// block itself, which has no vanilla item ID): renders the texture as a
+	// flat image instead of through the item renderer.
+	"flat_texture_item": {
+		"type": "image",
+		"size": [16, 16],
+		"layer": 4,
+		"bindings": [
+			{
+				"binding_name": "#form_button_texture",
+				"binding_name_override": "#texture",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not ((#texture = '') or (#texture = 'loading')))",
+				"target_property_name": "#visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.8s' * #texture) = 'textures')",
+				"target_property_name": "#visible"
+			}
+		]
+	}
+}
