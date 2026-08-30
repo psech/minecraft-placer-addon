@@ -35,13 +35,18 @@ Download `Placer.mcaddon` from the [latest release](https://github.com/psech/min
 
 ### In-game usage
 
-```mcfunction
-/give @s placer:placer
+Craft it like a Dispenser, with an iron ingot in place of the bow:
+
+```text
+C C C        C = cobblestone
+C I C        I = iron ingot
+C R C        R = redstone dust
 ```
 
-or
+Or, with cheats enabled:
 
 ```mcfunction
+/give @s placer:placer
 /setblock ~ ~ ~ placer:placer
 ```
 
