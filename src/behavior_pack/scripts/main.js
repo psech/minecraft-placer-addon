@@ -222,6 +222,35 @@ function depositPlayerSlot(player, block, playerSlotIndex) {
   }
 }
 
+/**
+ * Spawns a Placer inventory's stacks as item entities at a block position,
+ * like a vanilla container dropping its contents when broken.
+ *
+ * A slot that fails to spawn (e.g. stale invalid typeId) is logged and
+ * skipped so the remaining slots still drop.
+ */
+function dropInventory(dimension, location, inventory) {
+  const dropLocation = {
+    x: location.x + 0.5,
+    y: location.y + 0.5,
+    z: location.z + 0.5,
+  };
+
+  for (const slot of inventory) {
+    if (!slot) {
+      continue;
+    }
+
+    try {
+      dimension.spawnItem(createItemStack(slot), dropLocation);
+    } catch (error) {
+      console.warn(
+        `[Placer] Failed to drop ${slot.typeId} x${slot.amount}: ${error}`,
+      );
+    }
+  }
+}
+
 /*
  * ============================================================================
  * Block placement (redstone activation)
@@ -428,14 +457,18 @@ system.beforeEvents.startup.subscribe(({ blockComponentRegistry }) => {
 
     onPlayerBreak(event) {
       /*
-       * Remove the persistent inventory when the block is broken.
+       * Drop the stored contents like a vanilla container, then remove the
+       * persistent inventory. The block is already air at this point, but
+       * the inventory is keyed by dimension + location, so it can still be
+       * read through the (now-air) block.
        *
-       * IMPORTANT:
-       * This currently deletes the stored contents without dropping
-       * them into the world. Dropping the contents is part of
-       * Phase 6 (edge cases).
+       * Known gap (Phase 6): destruction that bypasses this hook — e.g.
+       * explosions — leaves the dynamic property orphaned and drops nothing.
        */
-      deleteInventory(event.block);
+      const { block, dimension } = event;
+
+      dropInventory(dimension, block.location, getInventory(block));
+      deleteInventory(block);
     },
   });
 });

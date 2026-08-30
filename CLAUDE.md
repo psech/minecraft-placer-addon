@@ -53,10 +53,4 @@ Record confirmed runtime behaviour here so it isn't re-litigated:
 - The grid-row wrapper centers the 3×3 grid (verified 2026-08-30).
 - Zero-motion screen animations (override of `third_party_server_screen` `$screen_animations`/`$background_animations` with no-op anims firing `screen.exit_end`) suppress the swipe on the close/reopen cycle (verified 2026-08-30). Side effect: all server forms lose slide transitions while the pack is active.
 - `onRedstoneUpdate` events carry `powerLevel` and `previousPowerLevel` (stable, v26.40 docs), so rising-edge detection is stateless.
-
-Pending runtime verification (Phase 5 placement — move up once confirmed):
-
-- **Front-direction mapping**: `FRONT_OFFSETS` in `main.js` assumes `minecraft:cardinal_direction` = the direction the player faced at placement, so the front points opposite to the state. The official docs' example is internally ambiguous on this. If in-game blocks appear on the BACK side of the Placer, negate all four offsets (the map's comment says so too).
-- One rising edge places exactly one block; level fluctuations while powered don't retrigger.
-- `dispenser.dispense` / `dispenser.fail` sound ids play on this runtime.
-- Placement into liquid replaces the liquid block.
+- Phase 5 placement verified end to end (2026-08-30): `minecraft:cardinal_direction` stores the direction the player FACED at placement (front = opposite of state — `FRONT_OFFSETS` in `main.js` is correct as written, all four facings tested); one rising edge places exactly one block (a held-on lever does not retrigger); blocked fronts fail cleanly; liquid is replaced; random slot selection works; `dispenser.dispense`/`dispenser.fail` sound ids play. Confirmed compatible with piston contraptions on a clock (place → piston pushes → place again).
