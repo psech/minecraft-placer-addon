@@ -103,6 +103,12 @@ Then iterate by editing the source and running `/reload all` in-game.
 
 See [docs/Minecraft Bedrock Add-on_ Placer Block.md](docs/Minecraft%20Bedrock%20Add-on_%20Placer%20Block.md) for the full specification.
 
+### Known differences from a vanilla Dispenser
+
+- **Comparators can't read the Placer's fill level** (custom blocks can't have real containers). Tip: point the comparator at the hopper feeding or draining the Placer instead.
+- The inventory screen is a snapshot — hopper transfers while it's open appear on the next click or reopen.
+- Breaking by hand takes ~5s instead of 17.5s (and still drops the block).
+
 ## Credits
 
 The container-style UI is adapted from [Chest-UI](https://github.com/Herobrine643928/Chest-UI) by [LeGend077](https://github.com/LeGend077) and Herobrine64, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Modifications: 3×3 dispenser layout, fixed slot indexing for a functional player inventory, durability/enchant rendering removed.
