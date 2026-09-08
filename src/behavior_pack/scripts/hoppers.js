@@ -225,12 +225,17 @@ function pullOneItemIntoHopper(placerBlock, hopperBlock) {
  *
  * `frontOffset` is the direction the Placer's front faces (insertion
  * through the front is rejected); undefined skips the front exclusion.
+ *
+ * Returns true when any item was moved, so the caller can refresh open
+ * container screens.
  */
 export function processHopperTransfers(placerBlock, frontOffset) {
+  let changed = false;
+
   const above = getUnlockedHopperAt(placerBlock, ABOVE);
 
   if (above && hopperOutputsIntoPlacer(above, ABOVE)) {
-    pushOneItemFromHopper(above, placerBlock);
+    changed = pushOneItemFromHopper(above, placerBlock) || changed;
   }
 
   for (const offset of HORIZONTAL_OFFSETS) {
@@ -245,13 +250,15 @@ export function processHopperTransfers(placerBlock, frontOffset) {
     const side = getUnlockedHopperAt(placerBlock, offset);
 
     if (side && hopperOutputsIntoPlacer(side, offset)) {
-      pushOneItemFromHopper(side, placerBlock);
+      changed = pushOneItemFromHopper(side, placerBlock) || changed;
     }
   }
 
   const below = getUnlockedHopperAt(placerBlock, BELOW);
 
   if (below) {
-    pullOneItemIntoHopper(placerBlock, below);
+    changed = pullOneItemIntoHopper(placerBlock, below) || changed;
   }
+
+  return changed;
 }
