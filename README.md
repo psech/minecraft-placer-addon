@@ -108,6 +108,7 @@ See [docs/Minecraft Bedrock Add-on_ Placer Block.md](docs/Minecraft%20Bedrock%20
 - **Comparators can't read the Placer's fill level** (custom blocks can't have real containers). Tip: point the comparator at the hopper feeding or draining the Placer instead.
 - The inventory screen is a snapshot — hopper transfers while it's open appear on the next click or reopen.
 - Breaking by hand takes ~5s instead of 17.5s (and still drops the block).
+- Items whose id differs from their block's id (repeater, comparator, redstone dust, string) are rejected as "not placeable blocks" — placing redstone components is out of scope.
 
 ## Credits
 
