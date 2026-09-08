@@ -11,7 +11,6 @@ import {
   setSlot,
   takeOneItem,
 } from "./inventory.js";
-import { uiManager } from "@minecraft/server-ui";
 import { buildPlacerScreen, PLAYER_SLOT_OFFSET } from "./ui/placerScreen.js";
 
 const PLACER_BLOCK_ID = "placer:placer";
@@ -75,100 +74,44 @@ function getPlayerContainer(player) {
  *   close button / ESC       -> done
  */
 
-/*
- * Screens currently open, keyed by player id. Hopper transfers cannot
- * update an open form in place, so when a watched Placer's contents
- * change, the form is force-closed (uiManager.closeAllForms) with the
- * session's `refresh` flag set; the response handler sees the flag and
- * reopens the screen with fresh contents. With the zero-motion screen
- * animations this reads as an in-place refresh.
- */
-const openScreens = new Map();
-
 /**
  * Opens (or reopens) the Placer screen for a player.
+ *
+ * The screen is a snapshot: hopper transfers while it is open only become
+ * visible on the next click or reopen. Live refreshing via
+ * uiManager.closeAllForms was tried and rejected — see CLAUDE.md.
  */
 function openPlacerScreen(player, dimension, location) {
   const block = resolvePlacerBlock(dimension, location);
-  const container = getPlayerContainer(player);
 
-  if (!block || !container) {
-    openScreens.delete(player.id);
-
+  if (!block) {
     return;
   }
 
-  openScreens.set(player.id, { player, dimension, location, refresh: false });
+  const container = getPlayerContainer(player);
+
+  if (!container) {
+    return;
+  }
 
   buildPlacerScreen(getInventory(block), container)
     .show(player)
     .then((response) => {
-      const session = openScreens.get(player.id);
-      const refreshRequested = session?.refresh === true;
-
-      if (session) {
-        session.refresh = false;
-      }
-
       debugLog(
         `form response: canceled=${response.canceled} ` +
           `reason=${response.cancelationReason ?? "none"} ` +
-          `selection=${response.selection ?? "none"} ` +
-          `refresh=${refreshRequested}`,
+          `selection=${response.selection ?? "none"}`,
       );
 
       if (response.canceled || response.selection === undefined) {
-        if (refreshRequested) {
-          openPlacerScreen(player, dimension, location);
-        } else {
-          openScreens.delete(player.id);
-        }
-
         return;
       }
 
       handleSlotSelection(player, dimension, location, response.selection);
     })
     .catch((error) => {
-      openScreens.delete(player.id);
-
       console.warn(`[Placer] Failed to show screen: ${error}`);
     });
-}
-
-/**
- * Force-refreshes the screens of players who are viewing this Placer.
- *
- * Called after hopper transfers change a Placer's contents.
- */
-function refreshOpenScreens(block) {
-  const { x, y, z } = block.location;
-  const dimensionId = block.dimension.id;
-
-  for (const [playerId, session] of openScreens) {
-    if (
-      session.refresh ||
-      session.dimension.id !== dimensionId ||
-      session.location.x !== x ||
-      session.location.y !== y ||
-      session.location.z !== z
-    ) {
-      continue;
-    }
-
-    session.refresh = true;
-
-    try {
-      uiManager.closeAllForms(session.player);
-    } catch (error) {
-      /*
-       * The player is gone (left the world); drop the session.
-       */
-      openScreens.delete(playerId);
-
-      debugLog(`failed to refresh screen: ${error}`);
-    }
-  }
 }
 
 /**
@@ -500,9 +443,7 @@ system.beforeEvents.startup.subscribe(({ blockComponentRegistry }) => {
        */
       const { block } = event;
 
-      if (processHopperTransfers(block, getFrontOffset(block))) {
-        refreshOpenScreens(block);
-      }
+      processHopperTransfers(block, getFrontOffset(block));
     },
 
     onRedstoneUpdate(event) {
