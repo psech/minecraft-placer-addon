@@ -26,6 +26,11 @@
 
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
 
+      "minecraft:tick": {
+        "interval_range": [8, 8],
+        "looping": true
+      },
+
       "minecraft:material_instances": {
         "north": {
           "texture": "placer_side"

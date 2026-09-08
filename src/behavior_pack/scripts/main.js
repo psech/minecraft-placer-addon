@@ -1,9 +1,11 @@
-import { BlockTypes, system } from "@minecraft/server";
+import { system } from "@minecraft/server";
+import { processHopperTransfers } from "./hoppers.js";
 import {
   createItemStack,
   deleteInventory,
   getInventory,
   insertIntoInventory,
+  isPlaceableBlock,
   removeStack,
   serializeItemStack,
   setSlot,
@@ -55,17 +57,6 @@ function resolvePlacerBlock(dimension, location) {
  */
 function getPlayerContainer(player) {
   return player.getComponent("minecraft:inventory")?.container ?? null;
-}
-
-/**
- * Returns true when an item type is a placeable block.
- *
- * The Placer only stores placeable blocks. This also protects players from
- * losing data on complex items (enchantments, durability, names), because
- * the Placer persists only typeId + amount.
- */
-function isPlaceableBlock(typeId) {
-  return BlockTypes.get(typeId) !== undefined;
 }
 
 /*
@@ -292,10 +283,10 @@ function playPlacerSound(block, soundId) {
 }
 
 /**
- * Returns the block directly in front of a Placer, or undefined when the
- * front direction is unknown or the target position is not loaded.
+ * Returns the offset of the Placer's front face, or undefined when the
+ * orientation state is missing or unknown.
  */
-function getFrontBlock(block) {
+function getFrontOffset(block) {
   let state;
 
   try {
@@ -308,7 +299,19 @@ function getFrontBlock(block) {
 
   if (!offset) {
     console.warn(`[Placer] Unknown cardinal_direction state: ${state}`);
+  }
 
+  return offset;
+}
+
+/**
+ * Returns the block directly in front of a Placer, or undefined when the
+ * front direction is unknown or the target position is not loaded.
+ */
+function getFrontBlock(block) {
+  const offset = getFrontOffset(block);
+
+  if (!offset) {
     return undefined;
   }
 
@@ -426,6 +429,17 @@ system.beforeEvents.startup.subscribe(({ blockComponentRegistry }) => {
       }
 
       openPlacerScreen(player, block.dimension, block.location);
+    },
+
+    onTick(event) {
+      /*
+       * Fires every 8 game ticks via minecraft:tick in blocks/placer.json —
+       * the vanilla hopper cooldown — and only while the chunk is ticking,
+       * which matches vanilla hoppers pausing in unloaded chunks.
+       */
+      const { block } = event;
+
+      processHopperTransfers(block, getFrontOffset(block));
     },
 
     onRedstoneUpdate(event) {

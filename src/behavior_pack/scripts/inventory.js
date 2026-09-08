@@ -1,4 +1,4 @@
-import { ItemStack, world } from "@minecraft/server";
+import { BlockTypes, ItemStack, world } from "@minecraft/server";
 
 /*
  * ============================================================================
@@ -152,6 +152,17 @@ export function serializeItemStack(itemStack) {
     typeId: itemStack.typeId,
     amount: itemStack.amount,
   };
+}
+
+/**
+ * Returns true when an item type is a placeable block.
+ *
+ * The Placer only stores placeable blocks. This also protects players from
+ * losing data on complex items (enchantments, durability, names), because
+ * the Placer persists only typeId + amount.
+ */
+export function isPlaceableBlock(typeId) {
+  return BlockTypes.get(typeId) !== undefined;
 }
 
 /*

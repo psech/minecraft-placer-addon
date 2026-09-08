@@ -97,7 +97,7 @@ Then iterate by editing the source and running `/reload all` in-game.
 | 1 | Orientation — front face tracks player placement direction | ✅ Done |
 | 2 | Inventory backend — 9 slots on world dynamic properties | ✅ Done |
 | 3 | UI — 3×3 container-style interface via JSON UI (real item icons, stack counts, player inventory below; click-to-transfer) | ✅ Done |
-| 4 | Hopper interaction — all sides except front | ⬜ Planned |
+| 4 | Hopper interaction — insertion from above and non-front sides, extraction from below, vanilla rate (1 item / 8 ticks per hopper), redstone-locked hoppers respected | 🔄 Implemented, pending in-game verification |
 | 5 | Block placement on redstone activation (rising edge → place one block in front, random eligible slot, dispenser sounds) | ✅ Done |
 | 6 | Edge cases — unloaded chunks, protected areas, rapid pulses, etc. (contents drop on player break: ✅) | 🔄 Partial |
 
