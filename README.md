@@ -20,7 +20,7 @@ One block is placed directly in front
 
 ## What it does
 
-- **Directional block** — the front faces the player when placed, like a Dispenser. Front face has a distinct texture.
+- **Directional block** — the front faces the player when placed, like a Dispenser, in all six directions (including straight up and down for vertical building). Front face has a distinct texture.
 - **9-slot inventory** — proper container semantics: stack limits, merging, partial insertion, swapping, per-block persistence that survives `/reload all`.
 - **Redstone activation** — one redstone pulse places exactly one block in front of the Placer and decrements the source stack.
 - **Hopper support** (planned) — hoppers insert/extract from every side *except* the front, which is the output face.
