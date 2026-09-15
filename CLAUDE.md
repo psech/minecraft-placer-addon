@@ -47,14 +47,12 @@ magick \
 
 Note: `placer_side`/`placer_top` in terrain_texture.json point at vanilla `furnace_side`/`furnace_top` — fetch those from Mojang/bedrock-samples when regenerating.
 
-## Phase 6 backlog (agreed 2026-09-08)
+## Phase 6 backlog (updated 2026-09-15)
 
-Remaining work, in rough priority order:
-
-1. **Explosion-safe drops**: swap `onPlayerBreak` → `onBreak` (fires for all destruction causes — player, explosions, destroy-mode commands; v26.40 docs) so contents drop instead of being orphaned. The synchronous drop/delete body can stay as-is.
-2. **Placement validity**: Phase 5 places via `setType`, which bypasses vanilla attachment rules (e.g. a torch placed into mid-air floats until a block update). Candidate fix: `Block.canPlace(blockToPlace, face)` — VERIFY it exists and is stable on 1.26.45 before using. Decision made: do NOT add an item→block alias map for redstone components (repeater etc.) — a Placer laying oriented redstone parts is out of scope.
-3. **Protected areas** — placement currently ignores spawn protection / permission layers.
-4. **Rapid-pulse / race torture test** — believed safe by design (stateless rising edge, synchronous transfers), needs a deliberate test.
+1. **Explosion-safe drops** — IMPLEMENTED, pending in-game verification: `onPlayerBreak` → `onBreak` in `main.js` (fires for all destruction causes). To verify: player break still drops; TNT now drops contents; if the content log shows `[Placer] Failed to drop` on the TNT test, mutation inside `onBreak` during explosions is restricted and the drop/delete body needs a `system.run` deferral (capture the inventory synchronously first).
+2. **Placement validity** — CLOSED as accepted limitation (2026-09-15): `Block.canPlace` does NOT exist in v26.40 (the backlog's candidate was wrong; verified against docs), and no other placement-validity API exists. A support-needing block (torch, rail, flower) placed into air floats until a block update pops it — harmless quirk, no item loss, and vanilla has no reference behaviour (dispensers eject rather than place). A deny-list of attachable blocks was considered and rejected (ages badly). Prior decision stands: no item→block alias map for redstone components.
+3. **Protected areas** — CLOSED as vanilla-consistent (2026-09-15): spawn protection restricts players, not machines — a vanilla dispenser also operates inside protected areas — and the script surface has no API to query protection anyway.
+4. **Rapid-pulse / race torture test** — remaining; believed safe by design (stateless rising edge, synchronous transfers), needs a deliberate in-game test (fast observer/comparator clock + hopper feed + UI open during operation + adjacent Placers sharing a feed).
 
 ## Development & testing workflow
 

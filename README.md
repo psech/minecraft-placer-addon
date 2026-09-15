@@ -109,6 +109,7 @@ See [docs/Minecraft Bedrock Add-on_ Placer Block.md](docs/Minecraft%20Bedrock%20
 - The inventory screen is a snapshot — hopper transfers while it's open appear on the next click or reopen.
 - Breaking by hand takes ~5s instead of 17.5s (and still drops the block).
 - Items whose id differs from their block's id (repeater, comparator, redstone dust, string) are rejected as "not placeable blocks" — placing redstone components is out of scope.
+- Blocks that normally need support (torches, rails, flowers) are placed without attachment checks — placed into open air they float until a block update pops them off.
 
 ## Credits
 

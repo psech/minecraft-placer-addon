@@ -473,15 +473,15 @@ system.beforeEvents.startup.subscribe(({ blockComponentRegistry }) => {
       system.run(() => activatePlacer(dimension, location));
     },
 
-    onPlayerBreak(event) {
+    onBreak(event) {
       /*
        * Drop the stored contents like a vanilla container, then remove the
-       * persistent inventory. The block is already air at this point, but
-       * the inventory is keyed by dimension + location, so it can still be
-       * read through the (now-air) block.
-       *
-       * Known gap (Phase 6): destruction that bypasses this hook — e.g.
-       * explosions — leaves the dynamic property orphaned and drops nothing.
+       * persistent inventory. onBreak fires for every destruction cause
+       * (player mining, explosions, destroy-mode /setblock and /fill),
+       * unlike onPlayerBreak, which misses everything but player mining.
+       * The block is already air at this point, but the inventory is keyed
+       * by dimension + location, so it can still be read through the
+       * (now-air) block.
        */
       const { block, dimension } = event;
 
