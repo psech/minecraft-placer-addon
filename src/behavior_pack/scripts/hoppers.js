@@ -220,25 +220,39 @@ function pullOneItemIntoHopper(placerBlock, hopperBlock) {
 }
 
 /**
+ * Returns true when two offsets point the same way.
+ */
+function sameOffset(first, second) {
+  return (
+    first !== undefined &&
+    second !== undefined &&
+    first.x === second.x &&
+    first.y === second.y &&
+    first.z === second.z
+  );
+}
+
+/**
  * Runs one hopper-transfer cycle for a Placer: at most one item in from
  * each feeding hopper and one item out to a hopper below.
  *
- * `frontOffset` is the direction the Placer's front faces (insertion
- * through the front is rejected); undefined skips the front exclusion.
+ * `frontOffset` is the direction the Placer's front faces — transfers
+ * through the front are rejected, and since the Placer can face up or
+ * down, that can exclude the hopper above (front = up) or the extraction
+ * hopper below (front = down), not just a horizontal side. undefined
+ * skips the front exclusion.
  */
 export function processHopperTransfers(placerBlock, frontOffset) {
-  const above = getUnlockedHopperAt(placerBlock, ABOVE);
+  if (!sameOffset(frontOffset, ABOVE)) {
+    const above = getUnlockedHopperAt(placerBlock, ABOVE);
 
-  if (above && hopperOutputsIntoPlacer(above, ABOVE)) {
-    pushOneItemFromHopper(above, placerBlock);
+    if (above && hopperOutputsIntoPlacer(above, ABOVE)) {
+      pushOneItemFromHopper(above, placerBlock);
+    }
   }
 
   for (const offset of HORIZONTAL_OFFSETS) {
-    if (
-      frontOffset &&
-      offset.x === frontOffset.x &&
-      offset.z === frontOffset.z
-    ) {
+    if (sameOffset(frontOffset, offset)) {
       continue;
     }
 
@@ -249,9 +263,11 @@ export function processHopperTransfers(placerBlock, frontOffset) {
     }
   }
 
-  const below = getUnlockedHopperAt(placerBlock, BELOW);
+  if (!sameOffset(frontOffset, BELOW)) {
+    const below = getUnlockedHopperAt(placerBlock, BELOW);
 
-  if (below) {
-    pullOneItemIntoHopper(placerBlock, below);
+    if (below) {
+      pullOneItemIntoHopper(placerBlock, below);
+    }
   }
 }

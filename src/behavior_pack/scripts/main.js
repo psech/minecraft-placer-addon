@@ -253,25 +253,26 @@ function dropInventory(dimension, location, inventory) {
  */
 
 /*
- * Direction the Placer's front face points, per minecraft:cardinal_direction
+ * Direction the Placer's front face points, per minecraft:facing_direction
  * state value.
  *
- * The state records the direction the player was FACING at placement, and
- * the block's rotation permutations (blocks/placer.json) put the front
- * texture — the un-rotated "south" (+Z) material instance — on the side
- * facing the player, like a Dispenser. The front therefore points OPPOSITE
- * to the state value.
+ * The state records the direction the player was FACING at placement
+ * (verified in-game for the horizontal directions back when the block used
+ * minecraft:cardinal_direction, whose values match), and the block's
+ * rotation permutations (blocks/placer.json) put the front texture — the
+ * un-rotated "south" (+Z) material instance — on the side facing the
+ * player, like a Dispenser. The front therefore points OPPOSITE to the
+ * state value: place while looking down and the front faces up.
  *
  * Bedrock axes: north = -Z, south = +Z, east = +X, west = -X.
- *
- * If in-game testing shows blocks appearing on the BACK side, the trait
- * semantics are inverted on this runtime: negate all four offsets.
  */
 const FRONT_OFFSETS = new Map([
   ["north", { x: 0, y: 0, z: 1 }],
   ["south", { x: 0, y: 0, z: -1 }],
   ["east", { x: -1, y: 0, z: 0 }],
   ["west", { x: 1, y: 0, z: 0 }],
+  ["up", { x: 0, y: -1, z: 0 }],
+  ["down", { x: 0, y: 1, z: 0 }],
 ]);
 
 const SOUND_DISPENSE = "dispenser.dispense";
@@ -294,7 +295,7 @@ function getFrontOffset(block) {
   let state;
 
   try {
-    state = block.permutation.getState("minecraft:cardinal_direction");
+    state = block.permutation.getState("minecraft:facing_direction");
   } catch {
     state = undefined;
   }
@@ -302,7 +303,7 @@ function getFrontOffset(block) {
   const offset = FRONT_OFFSETS.get(state);
 
   if (!offset) {
-    console.warn(`[Placer] Unknown cardinal_direction state: ${state}`);
+    console.warn(`[Placer] Unknown facing_direction state: ${state}`);
   }
 
   return offset;
