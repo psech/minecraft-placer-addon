@@ -47,6 +47,8 @@ magick \
 
 Note: `placer_side`/`placer_top` in terrain_texture.json point at vanilla `furnace_side`/`furnace_top` — fetch those from Mojang/bedrock-samples when regenerating.
 
+The 256×256 `pack_icon.png` (same file in both packs) uses the same projection ×4, but for crisp pixel edges each source must be pre-upscaled (`-filter point -resize 256x256`) and distorted with `-interpolate Integer`, with source coordinates 0..256 and destination coordinates ×4 (top `128,0 / 256,64 / 128,128 / 0,64`; left `0,64 / 128,128 / 128,256 / 0,192`; right `128,128 / 256,64 / 256,192 / 128,256`) — distorting the raw 16px textures directly comes out blurry regardless of filter settings.
+
 ## Phase 6 backlog (updated 2026-09-15)
 
 1. **Explosion-safe drops** — DONE, verified in-game (2026-09-15): `onPlayerBreak` → `onBreak` in `main.js`; TNT-destroyed Placers drop their contents. `onBreak` permits synchronous world mutation (spawnItem + dynamic-property writes) even during explosions — no deferral needed.
