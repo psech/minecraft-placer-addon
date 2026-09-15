@@ -99,7 +99,7 @@ Then iterate by editing the source and running `/reload all` in-game.
 | 3 | UI — 3×3 container-style interface via JSON UI (real item icons, stack counts, player inventory below; click-to-transfer) | ✅ Done |
 | 4 | Hopper interaction — insertion from above and non-front sides, extraction from below, vanilla rate (1 item / 8 ticks per hopper), redstone-locked hoppers respected | ✅ Done |
 | 5 | Block placement on redstone activation (rising edge → place one block in front, random eligible slot, dispenser sounds) | ✅ Done |
-| 6 | Edge cases — unloaded chunks, protected areas, rapid pulses, etc. (contents drop on player break: ✅) | 🔄 Partial |
+| 6 | Edge cases — contents drop on any destruction (mining, explosions), rapid-pulse safe; placement-validity and protected-area items closed as documented limitations | ✅ Done |
 
 See [docs/Minecraft Bedrock Add-on_ Placer Block.md](docs/Minecraft%20Bedrock%20Add-on_%20Placer%20Block.md) for the full specification.
 
